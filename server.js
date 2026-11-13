@@ -5,13 +5,12 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// এডমিন ইমেইল (এটি দিয়ে লগইন করলে এডমিন প্যানেল ওপেন হবে)
 const ADMIN_EMAIL = "admin@pepe.com";
 
 let db = {
   users: [
-    { email: "admin@pepe.com", balance: 0, refs: 10, lastAdTime: 0, adsToday: 0 },
-    { email: "user@faucetpay.com", balance: 1250, refs: 3, lastAdTime: 0, adsToday: 5 }
+    { email: "admin@pepe.com", balance: 0, refs: 10, adsToday: 0, history: [] },
+    { email: "user@faucetpay.com", balance: 50, refs: 2, adsToday: 1, history: [{type: 'Ad Reward', amount: 50, date: 'Today'}] }
   ],
   adminSettings: {
     minRefs: 3,
@@ -19,14 +18,11 @@ let db = {
     rewardPerAd: 50
   },
   tasks: [
-    { id: 1, title: "Telegram চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" }
-  ],
-  ads: [
-    { id: 1, title: "পিপ কইন স্পন্সর এড #১", reward: 50, duration: 15, url: "https://example.com" }
+    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" },
+    { id: 2, title: "ইউটিউব চ্যানেল সাবস্ক্রাইব করুন", reward: 150, link: "https://youtube.com" }
   ]
 };
 
-// API: Login / Register (Admin or User)
 app.post('/api/login', (req, res) => {
   const { email } = req.body;
   if (!email || !email.includes('@')) {
@@ -35,7 +31,7 @@ app.post('/api/login', (req, res) => {
   
   let user = db.users.find(u => u.email === email);
   if (!user) {
-    user = { email, balance: 0, refs: 0, lastAdTime: 0, adsToday: 0 };
+    user = { email, balance: 0, refs: 0, adsToday: 0, history: [] };
     db.users.push(user);
   }
 
@@ -43,7 +39,6 @@ app.post('/api/login', (req, res) => {
   res.json({ success: true, user, isAdmin });
 });
 
-// API: Get Dashboard Data
 app.get('/api/user/:email', (req, res) => {
   const email = req.params.email;
   const user = db.users.find(u => u.email === email);
@@ -56,28 +51,13 @@ app.get('/api/user/:email', (req, res) => {
     isAdmin,
     settings: db.adminSettings, 
     tasks: db.tasks, 
-    ads: db.ads, 
     allUsers: isAdmin ? db.users : [] 
   });
 });
 
-// API: Admin Update Settings
-app.post('/api/admin/settings', (req, res) => {
-  const { email, minRefs, dailyLimit, rewardPerAd } = req.body;
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    return res.status(403).json({ success: false, message: 'অনুমতি নেই!' });
-  }
-
-  db.adminSettings.minRefs = Number(minRefs);
-  db.adminSettings.dailyLimit = Number(dailyLimit);
-  db.adminSettings.rewardPerAd = Number(rewardPerAd);
-
-  res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
-});
-
-// API: Watch Ad
+// Watch Ad API
 app.post('/api/watch-ad', (req, res) => {
-  const { email, adId } = req.body;
+  const { email } = req.body;
   let user = db.users.find(u => u.email === email);
   if (!user) return res.status(400).json({ success: false });
 
@@ -87,10 +67,25 @@ app.post('/api/watch-ad', (req, res) => {
 
   user.balance += db.adminSettings.rewardPerAd;
   user.adsToday += 1;
+  user.history.unshift({ type: 'Ad Watch Reward', amount: db.adminSettings.rewardPerAd, date: new Date().toLocaleTimeString() });
+  
   res.json({ success: true, newBalance: user.balance, adsToday: user.adsToday });
 });
 
-// API: Withdraw
+// Complete Task API
+app.post('/api/complete-task', (req, res) => {
+  const { email, taskId } = req.body;
+  let user = db.users.find(u => u.email === email);
+  let task = db.tasks.find(t => t.id === taskId);
+  if (!user || !task) return res.status(400).json({ success: false });
+
+  user.balance += task.reward;
+  user.history.unshift({ type: `Task: ${task.title}`, amount: task.reward, date: new Date().toLocaleTimeString() });
+
+  res.json({ success: true, newBalance: user.balance });
+});
+
+// Withdraw API
 app.post('/api/withdraw', (req, res) => {
   const { email } = req.body;
   let user = db.users.find(u => u.email === email);
@@ -105,10 +100,11 @@ app.post('/api/withdraw', (req, res) => {
 
   const amount = user.balance;
   user.balance = 0;
+  user.history.unshift({ type: 'FaucetPay Withdrawal', amount: -amount, date: new Date().toLocaleTimeString() });
+
   res.json({ success: true, message: `সফলভাবে ${amount} PEPE আপনার FaucetPay ইমেইলে পেমেন্ট পাঠানো হয়েছে!` });
 });
 
-// API: Demo Add Ref
 app.post('/api/add-ref', (req, res) => {
   const { email } = req.body;
   let user = db.users.find(u => u.email === email);
