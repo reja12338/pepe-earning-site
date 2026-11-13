@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pepe Coin FaucetPay Earning Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-slate-800 p-4 shadow-md flex justify-between items-center max-w-4xl mx-auto rounded-b-xl">
+        <h1 class="text-xl font-bold text-green-400">🐸 Pepe Earn Portal</h1>
+        <div id="nav-links" class="hidden space-x-3">
+            <button onclick="switchTab('dashboard')" class="bg-emerald-600 px-3 py-1.5 rounded text-sm">ড্যাশবোর্ড</button>
+            <button onclick="switchTab('withdraw')" class="bg-emerald-600 px-3 py-1.5 rounded text-sm">উইথড্র</button>
+            <button id="admin-nav-btn" onclick="switchTab('admin')" class="hidden bg-purple-600 px-3 py-1.5 rounded text-sm font-bold">👑 এডমিন প্যানেল</button>
+            <button onclick="logout()" class="bg-red-600 px-3 py-1.5 rounded text-sm">লগআউট</button>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-4 mt-6">
+        <!-- 1. Login Section -->
+        <div id="login-section" class="bg-slate-800 p-6 rounded-xl shadow-lg max-w-md mx-auto text-center">
+            <h2 class="text-2xl font-bold mb-4 text-green-400">FaucetPay দিয়ে লগইন করুন</h2>
+            <p class="text-gray-400 text-sm mb-4">ইউজার বা এডমিন ইমেইল দিয়ে প্রবেশ করুন। (এডমিন: admin@pepe.com)</p>
+            <input type="email" id="login-email" placeholder="example@gmail.com" class="w-full p-3 rounded bg-slate-700 border border-slate-600 mb-4 text-white focus:outline-none focus:border-green-400">
+            <button onclick="loginUser()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-bold p-3 rounded transition">লগইন / রেজিস্টার</button>
+        </div>
+
+        <!-- 2. Dashboard Section -->
+        <div id="dashboard-section" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                    <p class="text-gray-400 text-sm">মূল ব্যালেন্স</p>
+                    <h3 class="text-3xl font-extrabold text-green-400 mt-1"><span id="user-balance">0</span> PEPE</h3>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                    <p class="text-gray-400 text-sm">আজকের দেখা এড</p>
+                    <h3 class="text-3xl font-extrabold text-yellow-400 mt-1"><span id="user-ads-count">0</span> / <span id="max-ads-limit">30</span></h3>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                    <p class="text-gray-400 text-sm">মোট রেফারেল</p>
+                    <h3 class="text-3xl font-extrabold text-blue-400 mt-1"><span id="user-ref-count">0</span></h3>
+                </div>
+            </div>
+
+            <!-- Ad Watching Box -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-3 text-green-400">📺 বিজ্ঞাপন দেখে ইনকাম (১৫ সেকেন্ড)</h3>
+                <div id="ad-box" class="bg-slate-900 p-4 rounded text-center border border-slate-700">
+                    <p id="ad-status-text" class="mb-3 text-gray-300">একটি বিজ্ঞাপন দেখতে নিচের বাটনে ক্লিক করুন (+<span id="reward-val">50</span> PEPE)</p>
+                    <button id="start-ad-btn" onclick="startAd()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-6 py-2 rounded">বিজ্ঞাপন দেখুন (১৫ সেকেন্ড)</button>
+                </div>
+            </div>
+
+            <!-- Referral Link Box -->
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <h3 class="text-lg font-bold mb-2 text-blue-400">👥 রেফারেল সিস্টেম</h3>
+                <p class="text-sm text-gray-300 mb-3">উইথড্র করতে কমপক্ষে <span id="min-ref-req">3</span>টি রেফার করতে হবে। আপনার রেফারেল লিংক:</p>
+                <div class="flex gap-2">
+                    <input type="text" id="ref-link" readonly class="w-full p-2 bg-slate-900 rounded border border-slate-700 text-sm text-gray-300" value="">
+                    <button onclick="addDemoRef()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm whitespace-nowrap">টেস্ট: ১টি রেফার যোগ করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Withdraw Section -->
+        <div id="withdraw-section" class="hidden bg-slate-800 p-6 rounded-xl border border-slate-700 max-w-lg mx-auto">
+            <h2 class="text-2xl font-bold mb-4 text-green-400 text-center">FaucetPay অটো উইথড্র</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">আপনার FaucetPay ইমেইল</label>
+                    <input type="email" id="withdraw-email" readonly class="w-full p-3 bg-slate-900 rounded border border-slate-700 text-gray-400">
+                </div>
+                <div class="bg-slate-900 p-4 rounded border border-slate-700 text-sm space-y-1">
+                    <p>শর্ত: উইথড্র করতে কমপক্ষে <span id="withdraw-min-ref">3</span>টি রেফার প্রয়োজন।</p>
+                    <p>আপনার বর্তমান রেফার: <span id="withdraw-ref-count" class="font-bold text-yellow-400">0</span></p>
+                </div>
+                <button onclick="requestWithdraw()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-bold p-3 rounded">ইনস্ট্যান্ট উইথড্র করুন</button>
+                <p id="withdraw-msg" class="text-center text-sm font-semibold mt-2"></p>
+            </div>
+        </div>
+
+        <!-- 4. Admin Panel Section (100% Secure & Hidden for Users) -->
+        <div id="admin-section" class="hidden bg-slate-800 p-6 rounded-xl border border-purple-500 max-w-2xl mx-auto space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h2 class="text-2xl font-bold text-purple-400">👑 এডমিন কন্ট্রোল প্যানেল</h2>
+                <span class="bg-purple-900 text-purple-200 text-xs px-3 py-1 rounded-full">ফুল কন্ট্রোল</span>
+            </div>
+
+            <!-- Settings Update Form -->
+            <div class="space-y-4 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-lg font-semibold text-green-400">ওয়েবসাইট সেটিংস পরিবর্তন</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">ন্যূনতম রেফার শর্ত</label>
+                        <input type="number" id="admin-min-refs" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">দৈনিক এড লিমিট</label>
+                        <input type="number" id="admin-daily-limit" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">প্রতি এড রিওয়ার্ড (PEPE)</label>
+                        <input type="number" id="admin-reward" class="w-full p-2 bg-slate-800 rounded border border-slate-700 text-sm">
+                    </div>
+                </div>
+                <button onclick="updateAdminSettings()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded text-sm w-full">সেটিংস সেভ করুন</button>
+                <p id="admin-msg" class="text-center text-xs text-green-400 font-semibold"></p>
+            </div>
+
+            <!-- Total Registered Users List -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-lg font-semibold text-blue-400 mb-3">সকল রেজিস্টার্ড ইউজার তালিকা (<span id="total-users-count">0</span>)</h3>
+                <div class="overflow-x-auto max-h-48 overflow-y-auto">
+                    <table class="w-full text-left text-sm text-gray-300">
+                        <thead class="bg-slate-800 text-gray-400">
+                            <tr>
+                                <th class="p-2">ইমেইল</th>
+                                <th class="p-2">ব্যালেন্স</th>
+                                <th class="p-2">রেফার</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-table">
+                            <!-- JS will inject users here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserEmail = localStorage.getItem('pepe_user') || '';
+        let isAdminUser = false;
+
+        if (currentUserEmail) {
+            loadDashboard();
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('login-email').value.trim();
+            if(!email) return alert('দয়া করে ইমেইল দিন!');
+            
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email})
+            });
+            const data = await res.json();
+            if(data.success) {
+                currentUserEmail = data.user.email;
+                localStorage.setItem('pepe_user', currentUserEmail);
+                loadDashboard();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function loadDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('nav-links').classList.remove('hidden');
+
+            const res = await fetch(`/api/user/${currentUserEmail}`);
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('user-balance').innerText = data.user.balance;
+                document.getElementById('user-ads-count').innerText = data.user.adsToday;
+                document.getElementById('user-ref-count').innerText = data.user.refs;
+                document.getElementById('withdraw-ref-count').innerText = data.user.refs;
+                document.getElementById('withdraw-email').value = data.user.email;
+                document.getElementById('ref-link').value = window.location.origin + `/?ref=` + data.user.email;
+                
+                // Settings mapping
+                document.getElementById('max-ads-limit').innerText = data.settings.dailyLimit;
+                document.getElementById('min-ref-req').innerText = data.settings.minRefs;
+                document.getElementById('withdraw-min-ref').innerText = data.settings.minRefs;
+                document.getElementById('reward-val').innerText = data.settings.rewardPerAd;
+
+                // Admin check
+                if (data.isAdmin) {
+                    isAdminUser = true;
+                    document.getElementById('admin-nav-btn').classList.remove('hidden');
+                    document.getElementById('admin-min-refs').value = data.settings.minRefs;
+                    document.getElementById('admin-daily-limit').value = data.settings.dailyLimit;
+                    document.getElementById('admin-reward').value = data.settings.rewardPerAd;
+                    document.getElementById('total-users-count').innerText = data.allUsers.length;
+
+                    let tableHTML = '';
+                    data.allUsers.forEach(u => {
+                        tableHTML += `<tr class="border-b border-slate-800">
+                            <td class="p-2">${u.email}</td>
+                            <td class="p-2 text-green-400">${u.balance} PEPE</td>
+                            <td class="p-2 text-blue-400">${u.refs}</td>
+                        </tr>`;
+                    });
+                    document.getElementById('admin-users-table').innerHTML = tableHTML;
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('withdraw-section').classList.add('hidden');
+            document.getElementById('admin-section').classList.add('hidden');
+
+            if(tab === 'dashboard') document.getElementById('dashboard-section').classList.remove('hidden');
+            if(tab === 'withdraw') {
+                document.getElementById('withdraw-section').classList.remove('hidden');
+                loadDashboard();
+            }
+            if(tab === 'admin' && isAdminUser) {
+                document.getElementById('admin-section').classList.remove('hidden');
+            }
+        }
+
+        async function updateAdminSettings() {
+            const minRefs = document.getElementById('admin-min-refs').value;
+            const dailyLimit = document.getElementById('admin-daily-limit').value;
+            const rewardPerAd = document.getElementById('admin-reward').value;
+
+            const res = await fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: currentUserEmail, minRefs, dailyLimit, rewardPerAd})
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('admin-msg').innerText = data.message;
+                loadDashboard();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        function startAd() {
+            const box = document.getElementById('ad-box');
+            let timeLeft = 15;
+            box.innerHTML = `<p class="text-xl font-bold text-yellow-400">বিজ্ঞাপন চলছে... ${timeLeft} সেকেন্ড অপেক্ষা করুন</p>`;
+            
+            const timer = setInterval(() => {
+                timeLeft--;
+                if(timeLeft > 0) {
+                    box.innerHTML = `<p class="text-xl font-bold text-yellow-400">বিজ্ঞাপন চলছে... ${timeLeft} সেকেন্ড অপেক্ষা করুন</p>`;
+                } else {
+                    clearInterval(timer);
+                    box.innerHTML = `<button onclick="claimAdReward()" class="bg-green-500 hover:bg-green-600 text-slate-950 font-bold px-6 py-2 rounded animate-pulse">পয়েন্ট সংগ্রহ করুন</button>`;
+                }
+            }, 1000);
+        }
+
+        async function claimAdReward() {
+            const res = await fetch('/api/watch-ad', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: currentUserEmail})
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert('সফলভাবে পয়েন্ট যোগ হয়েছে!');
+                loadDashboard();
+            } else {
+                alert(data.message);
+                loadDashboard();
+            }
+        }
+
+        async function addDemoRef() {
+            const res = await fetch('/api/add-ref', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: currentUserEmail})
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert('টেস্টের জন্য ১টি রেফার যোগ করা হয়েছে!');
+                loadDashboard();
+            }
+        }
+
+        async function requestWithdraw() {
+            const res = await fetch('/api/withdraw', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: currentUserEmail})
+            });
+            const data = await res.json();
+            const msg = document.getElementById('withdraw-msg');
+            msg.innerText = data.message;
+            msg.className = data.success ? "text-center text-sm font-semibold mt-2 text-green-400" : "text-center text-sm font-semibold mt-2 text-red-400";
+            if(data.success) loadDashboard();
+        }
+
+        function logout() {
+            localStorage.removeItem('pepe_user');
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
