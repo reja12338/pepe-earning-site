@@ -9,11 +9,11 @@ const ADMIN_EMAIL = "admin@pepe.com";
 
 let db = {
   users: [
-    { email: "admin@pepe.com", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, history: [] }
+    { email: "admin@pepe.com", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] }
   ],
   adminSettings: {
     minRefs: 3,
-    minWithdraw: 1000, // ন্যূনতম উইথড্র অ্যামাউন্ট (এডমিন প্যানেل থেকে পরিবর্তনযোগ্য)
+    minWithdraw: 1000,
     dailyLimit: 30,
     rewardPerAd: 50,
     adDuration: 15,
@@ -21,7 +21,8 @@ let db = {
     faucetpayApiKey: ""
   },
   tasks: [
-    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" }
+    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" },
+    { id: 2, title: "আমাদের ইউটিউব চ্যানেল সাবস্ক্রাইব করুন", reward: 150, link: "https://youtube.com" }
   ],
   totalPaidOut: 0
 };
@@ -34,7 +35,6 @@ function checkDailyReset(user) {
   }
 }
 
-// Login / Register with Real Referral & Device Check
 app.post('/api/login', (req, res) => {
   const { email, refBy } = req.body;
   if (!email || !email.includes('@')) {
@@ -43,14 +43,12 @@ app.post('/api/login', (req, res) => {
   
   let user = db.users.find(u => u.email === email);
   if (!user) {
-    user = { email, balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, history: [] };
-    
-    // রিয়েল রেফারেল প্রসেসিং (ফেক প্রতিরোধ)
+    user = { email, balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] };
     if (refBy && refBy !== email) {
       let referrer = db.users.find(u => u.email === refBy);
       if (referrer) {
         user.referredBy = refBy;
-        referrer.refs += 1; // যার লিংকে একাউন্ট হয়েছে তার রেফার ১ বাড়ল
+        referrer.refs += 1;
         referrer.history.unshift({ type: `New Referral (${email})`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
       }
     }
@@ -84,12 +82,9 @@ app.get('/api/user/:email', (req, res) => {
   });
 });
 
-// Admin Settings Update
 app.post('/api/admin/settings', (req, res) => {
   const { email, minRefs, minWithdraw, dailyLimit, rewardPerAd, adDuration, adNetworkUrl, faucetpayApiKey } = req.body;
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    return res.status(403).json({ success: false, message: 'অনুমতি নেই!' });
-  }
+  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.adminSettings.minRefs = Number(minRefs);
   db.adminSettings.minWithdraw = Number(minWithdraw);
@@ -99,10 +94,9 @@ app.post('/api/admin/settings', (req, res) => {
   db.adminSettings.adNetworkUrl = adNetworkUrl;
   db.adminSettings.faucetpayApiKey = faucetpayApiKey;
 
-  res.json({ success: true, message: 'সকল সেটিংস সফলভাবে আপডেট হয়েছে!' });
+  res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
 });
 
-// Admin Task Management
 app.post('/api/admin/tasks/add', (req, res) => {
   const { email, title, reward, link } = req.body;
   if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
@@ -119,7 +113,6 @@ app.post('/api/admin/tasks/delete', (req, res) => {
   res.json({ success: true, message: 'টাস্ক ডিলিট করা হয়েছে!' });
 });
 
-// Watch Ad
 app.post('/api/watch-ad', (req, res) => {
   const { email } = req.body;
   let user = db.users.find(u => u.email === email);
@@ -127,7 +120,7 @@ app.post('/api/watch-ad', (req, res) => {
 
   checkDailyReset(user);
   if (user.adsToday >= db.adminSettings.dailyLimit) {
-    return res.json({ success: false, message: `আজকের ${db.adminSettings.dailyLimit}টি এড দেখার লিমিট শেষ!` });
+    return res.json({ success: false, message: `আজকের এড দেখার লিমিট শেষ!` });
   }
 
   user.balance += db.adminSettings.rewardPerAd;
@@ -137,20 +130,24 @@ app.post('/api/watch-ad', (req, res) => {
   res.json({ success: true, newBalance: user.balance, adsToday: user.adsToday });
 });
 
-// Complete Task
-app.post('/api/complete-task', (req, res) => {
+// Task Claim API (ক্লাইম করার পর ব্যালেন্সে যোগ হবে এবং কমপ্লিটেড লিস্টে থাকবে)
+app.post('/api/claim-task', (req, res) => {
   const { email, taskId } = req.body;
   let user = db.users.find(u => u.email === email);
   let task = db.tasks.find(t => t.id === taskId);
   if (!user || !task) return res.status(400).json({ success: false });
 
+  if (user.completedTasks.includes(taskId)) {
+    return res.json({ success: false, message: 'এই টাস্কটি আপনি ইতিমধ্যে সম্পন্ন করেছেন!' });
+  }
+
+  user.completedTasks.push(taskId);
   user.balance += task.reward;
   user.history.unshift({ type: `Task: ${task.title}`, amount: `+${task.reward} PEPE`, date: new Date().toLocaleTimeString() });
 
-  res.json({ success: true, newBalance: user.balance });
+  res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-// Withdraw with Minimum Amount & Ref Condition Check
 app.post('/api/withdraw', (req, res) => {
   const { email, withdrawEmail } = req.body;
   let user = db.users.find(u => u.email === email);
