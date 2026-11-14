@@ -7,233 +7,154 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white min-h-screen pb-12 font-sans">
-    <!-- Top Navbar -->
     <nav class="bg-slate-900 border-b border-slate-800 p-3 shadow-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
-            <h1 class="text-lg font-extrabold text-green-400 flex items-center gap-1">🐸 Pepe Earn</h1>
-            <div id="nav-links" class="hidden flex flex-wrap gap-1.5 items-center">
-                <button onclick="switchTab('dashboard')" class="bg-slate-800 hover:bg-emerald-600 px-2.5 py-1.5 rounded text-xs font-semibold transition">ড্যাশবোর্ড</button>
-                <button onclick="switchTab('tasks')" class="bg-slate-800 hover:bg-amber-600 px-2.5 py-1.5 rounded text-xs font-semibold transition">টাস্ক</button>
-                <button onclick="switchTab('withdraw')" class="bg-slate-800 hover:bg-emerald-600 px-2.5 py-1.5 rounded text-xs font-semibold transition">উইথড্র</button>
-                <button id="admin-nav-btn" onclick="switchTab('admin')" class="hidden bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded text-xs font-bold shadow">👑 এডমিন</button>
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg font-extrabold text-green-400">🐸 Pepe Earn</h1>
+            <div id="nav-links" class="hidden flex gap-1.5 items-center">
+                <button onclick="switchTab('dashboard')" class="bg-slate-800 hover:bg-emerald-600 px-2.5 py-1.5 rounded text-xs font-semibold">ড্যাশবোর্ড</button>
+                <button onclick="switchTab('tasks')" class="bg-slate-800 hover:bg-amber-600 px-2.5 py-1.5 rounded text-xs font-semibold">টাস্ক</button>
+                <button onclick="switchTab('withdraw')" class="bg-slate-800 hover:bg-emerald-600 px-2.5 py-1.5 rounded text-xs font-semibold">উইথড্র</button>
+                <button id="admin-nav-btn" onclick="switchTab('admin')" class="hidden bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded text-xs font-bold">👑 এডমিন</button>
                 <button onclick="logout()" class="bg-red-600/80 hover:bg-red-600 px-2.5 py-1.5 rounded text-xs font-semibold">লগআউট</button>
             </div>
         </div>
     </nav>
 
     <div class="max-w-4xl mx-auto p-3 mt-4">
-        <!-- 1. Login Section -->
+        <!-- Login Section -->
         <div id="login-section" class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl max-w-md mx-auto text-center mt-8">
             <div class="text-4xl mb-2">🐸</div>
             <h2 class="text-2xl font-bold mb-2 text-green-400">FaucetPay দিয়ে লগইন</h2>
-            <p class="text-gray-400 text-xs mb-5">আপনার FaucetPay একাউন্টের ইমেইল দিয়ে একাউন্ট তৈরি বা লগইন করুন।</p>
-            <input type="email" id="login-email" placeholder="আপনার FaucetPay ইমেইল লিখুন..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 mb-4 text-sm text-white focus:outline-none focus:border-green-400">
-            <button onclick="loginUser()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold p-3 rounded-xl transition shadow-lg">একাউন্টে প্রবেশ করুন</button>
+            <p class="text-gray-400 text-xs mb-5">রিয়েল মেম্বারদের জন্য সুরক্ষিত আর্নিং পোর্টাল।</p>
+            <input type="email" id="login-email" placeholder="আপনার FaucetPay ইমেইল দিন..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 mb-4 text-sm text-white focus:outline-none focus:border-green-400">
+            <button onclick="loginUser()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold p-3 rounded-xl transition shadow-lg">প্রবেশ করুন</button>
         </div>
 
-        <!-- 2. User Dashboard Section -->
+        <!-- Dashboard Section -->
         <div id="dashboard-section" class="hidden space-y-4">
-            <!-- Global Site Stats -->
-            <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-3 rounded-xl border border-slate-800 flex justify-around text-center text-xs">
-                <div>
-                    <span class="text-gray-400 block">মোট ইউজার</span>
-                    <span id="site-total-users" class="font-bold text-white text-sm">0</span>
-                </div>
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-around text-center text-xs">
+                <div><span class="text-gray-400 block">মোট ইউজার</span><span id="site-total-users" class="font-bold text-white text-sm">0</span></div>
                 <div class="border-l border-slate-700"></div>
-                <div>
-                    <span class="text-gray-400 block">মোট পেমেন্ট (Paid)</span>
-                    <span id="site-total-paid" class="font-bold text-green-400 text-sm">0 PEPE</span>
-                </div>
+                <div><span class="text-gray-400 block">মোট পেমেন্ট</span><span id="site-total-paid" class="font-bold text-green-400 text-sm">0 PEPE</span></div>
             </div>
 
-            <!-- User Stats Cards -->
             <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
-                    <p class="text-gray-400 text-[11px]">আপনার ব্যালেন্স</p>
-                    <h3 class="text-lg font-extrabold text-green-400 mt-1"><span id="user-balance">0</span> <span class="text-xs">PEPE</span></h3>
+                    <p class="text-gray-400 text-[11px]">ব্যালেন্স</p>
+                    <h3 class="text-lg font-extrabold text-green-400 mt-1"><span id="user-balance">0</span></h3>
                 </div>
                 <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
                     <p class="text-gray-400 text-[11px]">আজকের এড</p>
                     <h3 class="text-lg font-extrabold text-yellow-400 mt-1"><span id="user-ads-count">0</span> / <span id="max-ads-limit">30</span></h3>
                 </div>
                 <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800">
-                    <p class="text-gray-400 text-[11px]">মোট রেফারেল</p>
+                    <p class="text-gray-400 text-[11px]">রিয়েল রেফার</p>
                     <h3 class="text-lg font-extrabold text-blue-400 mt-1"><span id="user-ref-count">0</span></h3>
                 </div>
             </div>
 
-            <!-- Ad Watching Box (Opens Ad Link + 15s Countdown) -->
+            <!-- Ad Section -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-base font-bold text-green-400">📺 বিজ্ঞাপন দেখে আয় করুন</h3>
-                    <span class="bg-green-950 text-green-400 text-[11px] px-2 py-0.5 rounded border border-green-800">+<span id="reward-val">50</span> PEPE / এড</span>
+                    <h3 class="text-base font-bold text-green-400">📺 বিজ্ঞাপন দেখে আয়</h3>
+                    <span class="bg-green-950 text-green-400 text-[11px] px-2 py-0.5 rounded">+<span id="reward-val">50</span> PEPE</span>
                 </div>
-                <p class="text-xs text-gray-400 mb-3">বিজ্ঞাপনে ক্লিক করলে নতুন পেজে নিয়ে যাবে। সেখানে <span id="ad-duration-text" class="text-yellow-400 font-bold">১৫</span> সেকেন্ড অপেক্ষা করে ফিরে এসে পয়েন্ট সংগ্রহ করুন।</p>
-                
+                <p class="text-xs text-gray-400 mb-3">বিজ্ঞাপনে ক্লিক করে <span id="ad-duration-text" class="text-yellow-400 font-bold">১৫</span> সেকেন্ড অপেক্ষা করে ফিরে আসুন।</p>
                 <div id="ad-box" class="bg-slate-950 p-4 rounded-xl text-center border border-slate-800">
-                    <button id="start-ad-btn" onclick="startAd()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm shadow transition">বিজ্ঞাপন দেখুন (<span id="btn-duration">15</span> সেকেন্ড)</button>
+                    <button id="start-ad-btn" onclick="startAd()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm shadow">বিজ্ঞাপন দেখুন (<span id="btn-duration">15</span> সেকেন্ড)</button>
                 </div>
             </div>
 
-            <!-- Referral System Box -->
+            <!-- Referral Link -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h3 class="text-base font-bold mb-1 text-blue-400">👥 রেফারেল ও বোনাস সিস্টেম</h3>
-                <p class="text-xs text-gray-400 mb-3">উইথড্র করতে কমপক্ষে <span id="min-ref-req" class="text-white font-bold">3</span>টি রেফার করতে হবে। বন্ধুদের আমন্ত্রণ জানান:</p>
+                <h3 class="text-base font-bold mb-1 text-blue-400">👥 রিয়েল রেফারেল লিংক</h3>
+                <p class="text-xs text-gray-400 mb-3">উইথড্র করতে কমপক্ষে <span id="min-ref-req" class="text-white font-bold">3</span>টি রিয়েল রেফার প্রয়োজন।</p>
                 <div class="flex gap-2">
-                    <input type="text" id="ref-link" readonly class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-xs text-gray-300" value="">
+                    <input type="text" id="ref-link" readonly class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-xs text-gray-300">
                     <button onclick="copyRef()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-semibold">কপি</button>
-                    <button onclick="addDemoRef()" class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-xs whitespace-nowrap font-semibold">+১ টেস্ট রেফার</button>
                 </div>
             </div>
 
-            <!-- Transaction History -->
+            <!-- History -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h3 class="text-base font-bold mb-3 text-purple-400">📜 ইনকাম ও লেনদেনের ইতিহাস</h3>
-                <div class="overflow-x-auto max-h-44 overflow-y-auto">
+                <h3 class="text-base font-bold mb-3 text-purple-400">📜 লেনদেনের ইতিহাস</h3>
+                <div class="overflow-x-auto max-h-40 overflow-y-auto">
                     <table class="w-full text-left text-xs text-gray-300">
                         <thead class="bg-slate-950 text-gray-400">
-                            <tr>
-                                <th class="p-2.5 rounded-tl-lg">বিবরণ</th>
-                                <th class="p-2.5">পরিমাণ</th>
-                                <th class="p-2.5 rounded-tr-lg">সময়</th>
-                            </tr>
+                            <tr><th class="p-2.5">বিবরণ</th><th class="p-2.5">পরিমাণ</th><th class="p-2.5">সময়</th></tr>
                         </thead>
-                        <tbody id="history-table">
-                            <tr><td colspan="3" class="p-3 text-center text-gray-500">এখনো কোনো লেনদেন হয়নি</td></tr>
-                        </tbody>
+                        <tbody id="history-table"><tr><td colspan="3" class="p-3 text-center text-gray-500">কোনো ইতিহাস নেই</td></tr></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- 3. Tasks Section -->
+        <!-- Tasks Section -->
         <div id="tasks-section" class="hidden space-y-4">
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h2 class="text-lg font-bold mb-1 text-amber-400">📋 ছোট টাস্ক সম্পন্ন করে আয়</h2>
-                <p class="text-xs text-gray-400 mb-4">নিচের কাজগুলো সম্পন্ন করে অতিরিক্ত PEPE পয়েন্ট সংগ্রহ করুন।</p>
-                <div id="tasks-list" class="space-y-3"></div>
+                <h2 class="text-lg font-bold mb-1 text-amber-400">📋 টাস্ক অপশন</h2>
+                <div id="tasks-list" class="space-y-3 mt-3"></div>
             </div>
         </div>
 
-        <!-- 4. Withdraw Section -->
+        <!-- Withdraw Section -->
         <div id="withdraw-section" class="hidden bg-slate-900 p-6 rounded-xl border border-slate-800 max-w-lg mx-auto">
             <h2 class="text-xl font-bold mb-1 text-green-400 text-center">⚡ FaucetPay অটো উইথড্র</h2>
-            <p class="text-xs text-gray-400 text-center mb-5">ইমেইল দিয়ে ক্লিক করার সাথে সাথে অটো-পেমেন্ট সম্পন্ন হবে।</p>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">আপনার FaucetPay ইমেইল</label>
-                    <input type="email" id="withdraw-email" class="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 text-white text-sm">
-                </div>
+            <div class="space-y-4 text-sm mt-3">
+                <div><label class="block text-xs text-gray-400 mb-1">FaucetPay ইমেইল</label><input type="email" id="withdraw-email" class="w-full p-3 bg-slate-950 rounded-xl border border-slate-800 text-white text-sm"></div>
                 <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1.5 text-xs">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">উইথড্র শর্ত (ন্যূনতম রেফার):</span>
-                        <span class="font-bold text-white"><span id="withdraw-min-ref">3</span> টি</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">আপনার বর্তমান রেফার:</span>
-                        <span id="withdraw-ref-count" class="font-bold text-yellow-400">0</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">উইথড্রযোগ্য ব্যালেন্স:</span>
-                        <span id="withdraw-bal-display" class="font-bold text-green-400">0 PEPE</span>
-                    </div>
+                    <div class="flex justify-between"><span class="text-gray-400">ন্যূনতম উইথড্র লিমিট:</span><span class="font-bold text-yellow-400"><span id="withdraw-min-amt">1000</span> PEPE</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">ন্যূনতম রেফার শর্ত:</span><span class="font-bold text-white"><span id="withdraw-min-ref">3</span> টি</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">আপনার বর্তমান রেফার:</span><span id="withdraw-ref-count" class="font-bold text-yellow-400">0</span></div>
                 </div>
-                <button onclick="requestWithdraw()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold p-3.5 rounded-xl shadow-lg transition">ইনস্ট্যান্ট অটো-উইথড্র করুন</button>
+                <button onclick="requestWithdraw()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold p-3.5 rounded-xl shadow-lg">উইথড্র করুন</button>
                 <p id="withdraw-msg" class="text-center text-xs font-semibold mt-2"></p>
             </div>
         </div>
 
-        <!-- 5. FULL PRO ADMIN CONTROL PANEL -->
+        <!-- Admin Panel -->
         <div id="admin-section" class="hidden space-y-5">
             <div class="bg-gradient-to-r from-purple-900/50 to-slate-900 p-5 rounded-xl border border-purple-500/40 flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-extrabold text-purple-300">👑 এডমিন কন্ট্রোল প্যানেল</h2>
-                    <p class="text-xs text-gray-400">সাইটের সকল সেটিংস, এড নেটওয়ার্ক, টাস্ক ও ইউজার কন্ট্রোল করুন</p>
-                </div>
-                <span class="bg-purple-600 text-white text-[11px] font-bold px-3 py-1 rounded-full">১০০% কন্ট্রোল</span>
+                <div><h2 class="text-xl font-extrabold text-purple-300">👑 এডমিন কন্ট্রোল প্যানেল</h2><p class="text-xs text-gray-400">১০০% সিকিউর ও রিয়েল মেম্বার ম্যানেজমেন্ট</p></div>
             </div>
 
-            <!-- Admin Stats Overview -->
-            <div class="grid grid-cols-2 gap-3 text-center">
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <p class="text-xs text-gray-400">মোট কর্মরত ইউজার</p>
-                    <h3 id="admin-total-users" class="text-2xl font-extrabold text-blue-400 mt-1">0</h3>
-                </div>
-                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                    <p class="text-xs text-gray-400">মোট পেমেন্ট করা হয়েছে</p>
-                    <h3 id="admin-total-paid" class="text-2xl font-extrabold text-green-400 mt-1">0 PEPE</h3>
-                </div>
-            </div>
-
-            <!-- A. Ad Network, FaucetPay & Limits Settings -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-                <h3 class="text-base font-bold text-green-400 border-b border-slate-800 pb-2">⚙️ এড নেটওয়ার্ক, রেফার ও উইথড্র সেটিংস</h3>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div>
-                        <label class="block text-gray-400 mb-1">মিনিমাম রেফার শর্ত</label>
-                        <input type="number" id="admin-min-refs" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-gray-400 mb-1">২৪ ঘণ্টায় এড লিমিট</label>
-                        <input type="number" id="admin-daily-limit" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-gray-400 mb-1">প্রতি এড রিওয়ার্ড</label>
-                        <input type="number" id="admin-reward" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white">
-                    </div>
-                    <div>
-                        <label class="block text-gray-400 mb-1">এড অপেক্ষা (সেকেন্ড)</label>
-                        <input type="number" id="admin-duration" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white">
-                    </div>
+                <h3 class="text-base font-bold text-green-400 border-b border-slate-800 pb-2">⚙️ উইথড্র ও লিমিট সেটিংস</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                    <div><label class="block text-gray-400 mb-1">ন্যূনতম রেফার শর্ত</label><input type="number" id="admin-min-refs" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white"></div>
+                    <div><label class="block text-gray-400 mb-1">ন্যূনতম উইথড্র (PEPE)</label><input type="number" id="admin-min-withdraw" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-yellow-300"></div>
+                    <div><label class="block text-gray-400 mb-1">দৈনিক এড লিমিট</label><input type="number" id="admin-daily-limit" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white"></div>
+                    <div><label class="block text-gray-400 mb-1">প্রতি এড রিওয়ার্ড</label><input type="number" id="admin-reward" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white"></div>
+                    <div><label class="block text-gray-400 mb-1">এড অপেক্ষা (সেকেন্ড)</label><input type="number" id="admin-duration" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-white"></div>
                 </div>
-
                 <div class="space-y-3 text-xs">
-                    <div>
-                        <label class="block text-gray-400 mb-1">আপনার Ad Network ডাইরেক্ট লিংক (ক্লিক করলে যেখানে যাবে)</label>
-                        <input type="url" id="admin-ad-url" placeholder="https://your-ad-network-link.com" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-yellow-300">
-                    </div>
-                    <div>
-                        <label class="block text-gray-400 mb-1">FaucetPay Merchant API Key (অটো পেমেন্টের জন্য)</label>
-                        <input type="text" id="admin-fp-key" placeholder="FaucetPay API Key দিন" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-green-300">
-                    </div>
+                    <div><label class="block text-gray-400 mb-1">Ad Network ডাইরেক্ট লিংক</label><input type="url" id="admin-ad-url" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-yellow-300"></div>
+                    <div><label class="block text-gray-400 mb-1">FaucetPay API Key</label><input type="text" id="admin-fp-key" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700 text-green-300"></div>
                 </div>
-
-                <button onclick="updateAdminSettings()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs shadow">সকল সেটিংস সেভ ও আপডেট করুন</button>
+                <button onclick="updateAdminSettings()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs">সেটিংস আপডেট করুন</button>
                 <p id="admin-msg" class="text-center text-xs text-green-400 font-semibold"></p>
             </div>
 
-            <!-- B. Task Manager (Create & Delete Tasks) -->
+            <!-- Tasks Control -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
-                <h3 class="text-base font-bold text-amber-400 border-b border-slate-800 pb-2">📋 টাস্ক তৈরি ও কন্ট্রোল করুন</h3>
-                
+                <h3 class="text-base font-bold text-amber-400 border-b border-slate-800 pb-2">📋 টাস্ক ম্যানেজার</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-                    <input type="text" id="new-task-title" placeholder="টাস্কের নাম (যেমন: টেলিগ্রাম জয়েন)" class="p-2.5 bg-slate-950 rounded-lg border border-slate-700">
-                    <input type="url" id="new-task-link" placeholder="টাস্ক লিংক (https://...)" class="p-2.5 bg-slate-950 rounded-lg border border-slate-700">
+                    <input type="text" id="new-task-title" placeholder="টাস্কের নাম" class="p-2.5 bg-slate-950 rounded-lg border border-slate-700">
+                    <input type="url" id="new-task-link" placeholder="লিংক (https://...)" class="p-2.5 bg-slate-950 rounded-lg border border-slate-700">
                     <div class="flex gap-2">
                         <input type="number" id="new-task-reward" placeholder="পয়েন্ট" class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-700">
-                        <button onclick="addNewTask()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 rounded-lg whitespace-nowrap">+ যোগ</button>
+                        <button onclick="addNewTask()" class="bg-amber-500 text-slate-950 font-bold px-4 rounded-lg">+ যোগ</button>
                     </div>
                 </div>
-
-                <div id="admin-tasks-list" class="space-y-2 text-xs">
-                    <!-- Dynamic Admin Tasks with Delete button -->
-                </div>
+                <div id="admin-tasks-list" class="space-y-2 text-xs"></div>
             </div>
 
-            <!-- C. All Registered Users List -->
+            <!-- Users List -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h3 class="text-base font-bold text-blue-400 mb-3">👥 সাইটে কর্মরত সকল ইউজার তালিকা</h3>
+                <h3 class="text-base font-bold text-blue-400 mb-3">👥 কর্মরত সকল ইউজার তালিকা</h3>
                 <div class="overflow-x-auto max-h-60 overflow-y-auto">
                     <table class="w-full text-left text-xs text-gray-300">
-                        <thead class="bg-slate-950 text-gray-400">
-                            <tr>
-                                <th class="p-2.5">ইউজার ইমেইল</th>
-                                <th class="p-2.5">ব্যালেন্স</th>
-                                <th class="p-2.5">আজকের এড</th>
-                                <th class="p-2.5">রেফার</th>
-                            </tr>
-                        </thead>
+                        <thead class="bg-slate-950 text-gray-400"><tr><th class="p-2.5">ইমেইল</th><th class="p-2.5">ব্যালেন্স</th><th class="p-2.5">আজকের এড</th><th class="p-2.5">রেফার</th></tr></thead>
                         <tbody id="admin-users-table"></tbody>
                     </table>
                 </div>
@@ -246,16 +167,25 @@
         let isAdminUser = false;
         let siteSettings = { adDuration: 15, adNetworkUrl: 'https://www.google.com' };
 
+        // URL থেকে রিয়েল রেফারেল কোড ক্যাপচার করা
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        if (refParam) {
+            localStorage.setItem('pepe_ref', refParam);
+        }
+
         if (currentUserEmail) loadDashboard();
 
         async function loginUser() {
             const email = document.getElementById('login-email').value.trim();
             if(!email) return alert('দয়া করে ইমেইল দিন!');
             
+            const refBy = localStorage.getItem('pepe_ref') || null;
+
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email})
+                body: JSON.stringify({email, refBy})
             });
             const data = await res.json();
             if(data.success) {
@@ -277,90 +207,68 @@
             if(data.success) {
                 siteSettings = data.settings;
 
-                // Global stats
                 document.getElementById('site-total-users').innerText = data.stats.totalUsers;
                 document.getElementById('site-total-paid').innerText = data.stats.totalPaidOut + ' PEPE';
-
-                // User dashboard stats
-                document.getElementById('user-balance').innerText = data.user.balance;
-                document.getElementById('withdraw-bal-display').innerText = data.user.balance + ' PEPE';
+                document.getElementById('user-balance').innerText = data.user.balance + ' PEPE';
                 document.getElementById('user-ads-count').innerText = data.user.adsToday;
                 document.getElementById('user-ref-count').innerText = data.user.refs;
                 document.getElementById('withdraw-ref-count').innerText = data.user.refs;
                 document.getElementById('withdraw-email').value = data.user.email;
                 document.getElementById('ref-link').value = window.location.origin + `/?ref=` + data.user.email;
                 
-                // Dynamic Settings apply
                 document.getElementById('max-ads-limit').innerText = data.settings.dailyLimit;
                 document.getElementById('min-ref-req').innerText = data.settings.minRefs;
                 document.getElementById('withdraw-min-ref').innerText = data.settings.minRefs;
+                document.getElementById('withdraw-min-amt').innerText = data.settings.minWithdraw;
                 document.getElementById('reward-val').innerText = data.settings.rewardPerAd;
                 document.getElementById('ad-duration-text').innerText = data.settings.adDuration;
-                if(document.getElementById('btn-duration')) {
-                    document.getElementById('btn-duration').innerText = data.settings.adDuration;
-                }
+                if(document.getElementById('btn-duration')) document.getElementById('btn-duration').innerText = data.settings.adDuration;
 
-                // History Table
+                // History
                 let historyHTML = '';
                 if(data.user.history && data.user.history.length > 0) {
                     data.user.history.forEach(h => {
                         historyHTML += `<tr class="border-b border-slate-800/60"><td class="p-2.5">${h.type}</td><td class="p-2.5 font-bold text-green-400">${h.amount}</td><td class="p-2.5 text-gray-400">${h.date}</td></tr>`;
                     });
                 } else {
-                    historyHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">কোনো লেনদেনের ইতিহাস নেই</td></tr>`;
+                    historyHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">কোনো ইতিহাস নেই</td></tr>`;
                 }
                 document.getElementById('history-table').innerHTML = historyHTML;
 
-                // User Tasks List
+                // Tasks
                 let tasksHTML = '';
                 data.tasks.forEach(t => {
                     tasksHTML += `<div class="bg-slate-950 p-3.5 rounded-xl flex justify-between items-center border border-slate-800">
-                        <div>
-                            <p class="font-bold text-sm text-white">${t.title}</p>
-                            <p class="text-xs text-green-400 font-semibold mt-0.5">+${t.reward} PEPE</p>
-                        </div>
+                        <div><p class="font-bold text-sm">${t.title}</p><p class="text-xs text-green-400 mt-0.5">+${t.reward} PEPE</p></div>
                         <a href="${t.link}" target="_blank" onclick="completeTask(${t.id})" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-3.5 py-2 rounded-lg text-xs">কাজ করুন</a>
                     </div>`;
                 });
-                document.getElementById('tasks-list').innerHTML = tasksHTML || '<p class="text-xs text-gray-500">বর্তমানে কোনো টাস্ক নেই</p>';
+                document.getElementById('tasks-list').innerHTML = tasksHTML || '<p class="text-xs text-gray-500">কোনো টাস্ক নেই</p>';
 
-                // Admin Panel Populating
+                // Admin
                 if (data.isAdmin) {
                     isAdminUser = true;
                     document.getElementById('admin-nav-btn').classList.remove('hidden');
-                    
-                    document.getElementById('admin-total-users').innerText = data.stats.totalUsers;
-                    document.getElementById('admin-total-paid').innerText = data.stats.totalPaidOut + ' PEPE';
-
                     document.getElementById('admin-min-refs').value = data.settings.minRefs;
+                    document.getElementById('admin-min-withdraw').value = data.settings.minWithdraw;
                     document.getElementById('admin-daily-limit').value = data.settings.dailyLimit;
                     document.getElementById('admin-reward').value = data.settings.rewardPerAd;
                     document.getElementById('admin-duration').value = data.settings.adDuration;
                     document.getElementById('admin-ad-url').value = data.settings.adNetworkUrl;
                     document.getElementById('admin-fp-key').value = data.settings.faucetpayApiKey;
 
-                    // Admin Tasks List
                     let adminTasksHTML = '';
                     data.tasks.forEach(t => {
                         adminTasksHTML += `<div class="bg-slate-950 p-2.5 rounded-lg flex justify-between items-center border border-slate-800">
-                            <div>
-                                <span class="font-bold text-white">${t.title}</span> 
-                                <span class="text-green-400 ml-2">(+${t.reward} PEPE)</span>
-                            </div>
-                            <button onclick="deleteTask(${t.id})" class="bg-red-600/80 hover:bg-red-600 text-white px-2.5 py-1 rounded text-[11px]">ডিলিট</button>
+                            <span>${t.title} (+${t.reward})</span>
+                            <button onclick="deleteTask(${t.id})" class="bg-red-600 px-2.5 py-1 rounded text-[11px]">ডিলিট</button>
                         </div>`;
                     });
                     document.getElementById('admin-tasks-list').innerHTML = adminTasksHTML;
 
-                    // Admin Users Table
                     let usersHTML = '';
                     data.allUsers.forEach(u => {
-                        usersHTML += `<tr class="border-b border-slate-800/60">
-                            <td class="p-2.5 font-medium text-white">${u.email}</td>
-                            <td class="p-2.5 text-green-400 font-bold">${u.balance}</td>
-                            <td class="p-2.5 text-yellow-400">${u.adsToday}/${data.settings.dailyLimit}</td>
-                            <td class="p-2.5 text-blue-400 font-bold">${u.refs}</td>
-                        </tr>`;
+                        usersHTML += `<tr class="border-b border-slate-800/60"><td class="p-2.5">${u.email}</td><td class="p-2.5 text-green-400 font-bold">${u.balance}</td><td class="p-2.5 text-yellow-400">${u.adsToday}/${data.settings.dailyLimit}</td><td class="p-2.5 text-blue-400">${u.refs}</td></tr>`;
                     });
                     document.getElementById('admin-users-table').innerHTML = usersHTML;
                 }
@@ -379,30 +287,19 @@
             if(tab === 'admin' && isAdminUser) { document.getElementById('admin-section').classList.remove('hidden'); loadDashboard(); }
         }
 
-        // Open Ad Network Link + 15s Countdown
         function startAd() {
-            // এড নেটওয়ার্ক লিংক নতুন ট্যাবে ওপেন হবে
-            if(siteSettings.adNetworkUrl) {
-                window.open(siteSettings.adNetworkUrl, '_blank');
-            }
-
+            if(siteSettings.adNetworkUrl) window.open(siteSettings.adNetworkUrl, '_blank');
             const box = document.getElementById('ad-box');
             let timeLeft = siteSettings.adDuration || 15;
-            box.innerHTML = `<div class="py-2">
-                <p class="text-sm font-bold text-yellow-400">বিজ্ঞাপন পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>
-                <p class="text-[11px] text-gray-400 mt-1">সময় শেষ হলে নিচে পয়েন্ট সংগ্রহ করার বাটন আসবে</p>
-            </div>`;
+            box.innerHTML = `<p class="text-sm font-bold text-yellow-400 py-2">বিজ্ঞাপন পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>`;
             
             const timer = setInterval(() => {
                 timeLeft--;
                 if(timeLeft > 0) {
-                    box.innerHTML = `<div class="py-2">
-                        <p class="text-sm font-bold text-yellow-400">বিজ্ঞাপন পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>
-                        <p class="text-[11px] text-gray-400 mt-1">সময় শেষ হলে নিচে পয়েন্ট সংগ্রহ করার বাটন আসবে</p>
-                    </div>`;
+                    box.innerHTML = `<p class="text-sm font-bold text-yellow-400 py-2">বিজ্ঞাপন পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>`;
                 } else {
                     clearInterval(timer);
-                    box.innerHTML = `<button onclick="claimAdReward()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm animate-bounce shadow-lg">✅ পয়েন্ট সংগ্রহ করুন (+${siteSettings.rewardPerAd} PEPE)</button>`;
+                    box.innerHTML = `<button onclick="claimAdReward()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm shadow-lg">✅ পয়েন্ট সংগ্রহ করুন (+${siteSettings.rewardPerAd} PEPE)</button>`;
                 }
             }, 1000);
         }
@@ -415,11 +312,9 @@
             });
             const data = await res.json();
             if(data.success) {
-                alert('সফলভাবে পয়েন্ট আপনার ব্যালেন্সে যোগ হয়েছে!');
+                alert('সফলভাবে পয়েন্ট যোগ হয়েছে!');
                 loadDashboard();
-                document.getElementById('ad-box').innerHTML = `
-                    <button id="start-ad-btn" onclick="startAd()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm shadow transition">বিজ্ঞাপন দেখুন (${siteSettings.adDuration} সেকেন্ড)</button>
-                `;
+                document.getElementById('ad-box').innerHTML = `<button onclick="startAd()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold py-3 rounded-xl text-sm shadow">বিজ্ঞাপন দেখুন (${siteSettings.adDuration} সেকেন্ড)</button>`;
             } else {
                 alert(data.message);
                 loadDashboard();
@@ -435,24 +330,11 @@
             setTimeout(loadDashboard, 1500);
         }
 
-        async function addDemoRef() {
-            const res = await fetch('/api/add-ref', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: currentUserEmail})
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert('১টি রেফার সফলভাবে যোগ হয়েছে!');
-                loadDashboard();
-            }
-        }
-
         function copyRef() {
             const copyText = document.getElementById("ref-link");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("রেফারেল লিংক কপি হয়েছে!");
+            alert("রিয়েল রেফারেল লিংক কপি হয়েছে!");
         }
 
         async function requestWithdraw() {
@@ -471,9 +353,9 @@
             if(data.success) loadDashboard();
         }
 
-        // Admin Functions
         async function updateAdminSettings() {
             const minRefs = document.getElementById('admin-min-refs').value;
+            const minWithdraw = document.getElementById('admin-min-withdraw').value;
             const dailyLimit = document.getElementById('admin-daily-limit').value;
             const rewardPerAd = document.getElementById('admin-reward').value;
             const adDuration = document.getElementById('admin-duration').value;
@@ -483,7 +365,7 @@
             const res = await fetch('/api/admin/settings', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: currentUserEmail, minRefs, dailyLimit, rewardPerAd, adDuration, adNetworkUrl, faucetpayApiKey})
+                body: JSON.stringify({email: currentUserEmail, minRefs, minWithdraw, dailyLimit, rewardPerAd, adDuration, adNetworkUrl, faucetpayApiKey})
             });
             const data = await res.json();
             document.getElementById('admin-msg').innerText = data.message;
@@ -494,21 +376,14 @@
             const title = document.getElementById('new-task-title').value.trim();
             const link = document.getElementById('new-task-link').value.trim();
             const reward = document.getElementById('new-task-reward').value;
+            if(!title || !link || !reward) return alert('সকল তথ্য পূরণ করুন!');
 
-            if(!title || !link || !reward) return alert('টাস্কের সব তথ্য পূরণ করুন!');
-
-            const res = await fetch('/api/admin/tasks/add', {
+            await fetch('/api/admin/tasks/add', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({email: currentUserEmail, title, link, reward})
             });
-            const data = await res.json();
-            if(data.success) {
-                document.getElementById('new-task-title').value = '';
-                document.getElementById('new-task-link').value = '';
-                document.getElementById('new-task-reward').value = '';
-                loadDashboard();
-            }
+            loadDashboard();
         }
 
         async function deleteTask(taskId) {
