@@ -26,7 +26,7 @@ function loadDb() {
     ],
     adminSettings: {
       minRefs: 0,
-      minWithdraw: 10,
+      minWithdraw: 5,
       dailyLimit: 30,
       rewardPerAd: 10,
       adDuration: 15,
@@ -58,7 +58,7 @@ function checkDailyReset(user) {
   }
 }
 
-// Login & Register with clean error handling (No undefined)
+// Login & Register (Smooth & Secure)
 app.post('/api/login', (req, res) => {
   db = loadDb();
   const { email, refUid, deviceId } = req.body;
@@ -70,18 +70,16 @@ app.post('/api/login', (req, res) => {
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown_ip';
   const clientDevice = deviceId || ('dev_' + Math.random());
 
-  let user = db.users.find(u => u.email === email);
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
   if (!user) {
-    // ফেক অ্যাকাউন্ট ও মাল্টি-অ্যাকাউন্ট প্রটেকশন (এডমিন ছাড়া)
+    // একই ডিভাইস থেকে একাধিক একাউন্ট খোলার সিকিউরিটি চেক (এডমিন ছাড়া)
     if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      const existingDeviceUser = db.users.find(u => u.deviceId === clientDevice && u.email !== ADMIN_EMAIL);
-      
-      // একই ডিভাইস থেকে একাধিক অ্যাকাউন্ট খোলা কঠোরভাবে ব্লক করা হলো
+      const existingDeviceUser = db.users.find(u => u.deviceId === clientDevice && u.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase());
       if (existingDeviceUser) {
         return res.status(400).json({ 
           success: false, 
-          message: 'এই ডিভাইস থেকে ইতিমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে। একাধিক অ্যাকাউন্ট খোলা নিষিদ্ধ।' 
+          message: 'এই ডিভাইস থেকে ইতিমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে।' 
         });
       }
     }
@@ -103,7 +101,7 @@ app.post('/api/login', (req, res) => {
     
     if (refUid) {
       let referrer = db.users.find(u => u.uid === refUid);
-      if (referrer && referrer.email !== email) {
+      if (referrer && referrer.email.toLowerCase() !== email.toLowerCase()) {
         user.referredBy = referrer.email;
         referrer.refs += 1;
         referrer.history.unshift({ type: `New Referral`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
@@ -122,7 +120,7 @@ app.post('/api/login', (req, res) => {
 app.get('/api/user/:email', (req, res) => {
   db = loadDb();
   const email = req.params.email;
-  const user = db.users.find(u => u.email === email);
+  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return res.status(404).json({ success: false });
 
   checkDailyReset(user);
@@ -183,7 +181,7 @@ app.post('/api/admin/tasks/delete', (req, res) => {
 app.post('/api/watch-ad', (req, res) => {
   db = loadDb();
   const { email } = req.body;
-  let user = db.users.find(u => u.email === email);
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   checkDailyReset(user);
@@ -202,7 +200,7 @@ app.post('/api/watch-ad', (req, res) => {
 app.post('/api/claim-task', (req, res) => {
   db = loadDb();
   const { email, taskId } = req.body;
-  let user = db.users.find(u => u.email === email);
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   let task = db.tasks.find(t => t.id === taskId);
   if (!user || !task) return res.status(400).json({ success: false, message: 'টাস্ক বা ইউজার পাওয়া যায়নি!' });
 
@@ -218,11 +216,11 @@ app.post('/api/claim-task', (req, res) => {
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-// FaucetPay Real Send API Integration
+// FaucetPay Real Send API Integration (Exact Satoshi Math)
 app.post('/api/withdraw', async (req, res) => {
   db = loadDb();
   const { email, withdrawEmail } = req.body;
-  let user = db.users.find(u => u.email === email);
+  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   if (user.refs < db.adminSettings.minRefs) {
@@ -250,7 +248,7 @@ app.post('/api/withdraw', async (req, res) => {
     const fpResult = await fpResponse.json();
 
     if (fpResult.status === 200) {
-      user.balance =0;
+      user.balance = 0;
       db.totalPaidOut += amount;
       user.history.unshift({ type: `FaucetPay Payout (${withdrawEmail})`, amount: `-${amount} PEPE`, date: new Date().toLocaleTimeString() });
       saveDb(db);
