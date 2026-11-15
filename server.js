@@ -9,7 +9,7 @@ const ADMIN_EMAIL = "admin@pepe.com";
 
 let db = {
   users: [
-    { email: "admin@pepe.com", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] }
+    { email: "admin@pepe.com", uid: "admin_01", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] }
   ],
   adminSettings: {
     minRefs: 3,
@@ -21,8 +21,7 @@ let db = {
     faucetpayApiKey: ""
   },
   tasks: [
-    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" },
-    { id: 2, title: "আমাদের ইউটিউব চ্যানেল সাবস্ক্রাইব করুন", reward: 150, link: "https://youtube.com" }
+    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" }
   ],
   totalPaidOut: 0
 };
@@ -35,21 +34,27 @@ function checkDailyReset(user) {
   }
 }
 
+// Login / Register with Unique ID (UID) Referral
 app.post('/api/login', (req, res) => {
-  const { email, refBy } = req.body;
+  const { email, refUid } = req.body;
   if (!email || !email.includes('@')) {
     return res.status(400).json({ success: false, message: 'সঠিক FaucetPay ইমেইল দিন।' });
   }
   
   let user = db.users.find(u => u.email === email);
   if (!user) {
-    user = { email, balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] };
-    if (refBy && refBy !== email) {
-      let referrer = db.users.find(u => u.email === refBy);
-      if (referrer) {
-        user.referredBy = refBy;
+    // ইউনিক ইউজার আইডি জেনারেট করা (যেমন: u_849320)
+    const uniqueUid = 'u_' + Math.floor(100000 + Math.random() * 900000);
+    
+    user = { email, uid: uniqueUid, balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] };
+    
+    // রেফারেল প্রসেসিং (UID দিয়ে)
+    if (refUid) {
+      let referrer = db.users.find(u => u.uid === refUid);
+      if (referrer && referrer.email !== email) {
+        user.referredBy = referrer.email;
         referrer.refs += 1;
-        referrer.history.unshift({ type: `New Referral (${email})`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
+        referrer.history.unshift({ type: `New Referral`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
       }
     }
     db.users.push(user);
@@ -130,7 +135,6 @@ app.post('/api/watch-ad', (req, res) => {
   res.json({ success: true, newBalance: user.balance, adsToday: user.adsToday });
 });
 
-// Task Claim API (ক্লাইম করার পর ব্যালেন্সে যোগ হবে এবং কমপ্লিটেড লিস্টে থাকবে)
 app.post('/api/claim-task', (req, res) => {
   const { email, taskId } = req.body;
   let user = db.users.find(u => u.email === email);
