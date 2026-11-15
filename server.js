@@ -148,7 +148,7 @@ app.post('/api/claim-task', (req, res) => {
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-// FaucetPay Real Send API Integration
+// FaucetPay Real Send API Integration (100 Coins = Exact 100 PEPE)
 app.post('/api/withdraw', async (req, res) => {
   const { email, withdrawEmail } = req.body;
   let user = db.users.find(u => u.email === email);
@@ -162,6 +162,7 @@ app.post('/api/withdraw', async (req, res) => {
   }
 
   const amount = user.balance;
+  const satoshiAmount = Math.round(amount * 100000000); // পুরো কয়েন পাঠানোর জন্য ৮ দশমিক ঘর গুণ করা হলো
 
   try {
     const fpResponse = await fetch('https://faucetpay.io/api/v1/send', {
@@ -170,7 +171,7 @@ app.post('/api/withdraw', async (req, res) => {
       body: new URLSearchParams({
         api_key: db.adminSettings.faucetpayApiKey,
         to: withdrawEmail,
-        amount: amount,
+        amount: satoshiAmount,
         currency: 'PEPE'
       })
     });
