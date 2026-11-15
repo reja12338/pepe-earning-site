@@ -65,10 +65,10 @@
                 </div>
             </div>
 
-            <!-- Referral Link -->
+            <!-- Referral Link (UID Based, No Email) -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h3 class="text-base font-bold mb-1 text-blue-400">👥 রিয়েল রেফারেল লিংক</h3>
-                <p class="text-xs text-gray-400 mb-3">উইথড্র করতে কমপক্ষে <span id="min-ref-req" class="text-white font-bold">3</span>টি রিয়েল রেফার প্রয়োজন।</p>
+                <h3 class="text-base font-bold mb-1 text-blue-400">👥 সিকিউর রেফারেল লিংক</h3>
+                <p class="text-xs text-gray-400 mb-3">লিংকে কোনো ইমেল থাকবে না, সংখ্যা বা ইউনিক কোড থাকবে। উইথড্র করতে <span id="min-ref-req" class="text-white font-bold">3</span>টি রেফার লাগবে।</p>
                 <div class="flex gap-2">
                     <input type="text" id="ref-link" readonly class="w-full p-2.5 bg-slate-950 rounded-lg border border-slate-800 text-xs text-gray-300">
                     <button onclick="copyRef()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-semibold">কপি</button>
@@ -89,10 +89,10 @@
             </div>
         </div>
 
-        <!-- Tasks Section (Secure Timer & Claim System) -->
+        <!-- Tasks Section -->
         <div id="tasks-section" class="hidden space-y-4">
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
-                <h2 class="text-lg font-bold mb-1 text-amber-400">📋 টাস্ক অপশন (লিংক ভিজিট ও কাউন্টডাউন)</h2>
+                <h2 class="text-lg font-bold mb-1 text-amber-400">📋 টাস্ক অপশন (ভিজিট ও কাউন্টডাউন)</h2>
                 <p class="text-xs text-gray-400 mb-4">প্রথমে লিংকে গিয়ে কাজ করুন, ১৫ সেকেন্ড পর ক্লাইম বাটন আসবে।</p>
                 <div id="tasks-list" class="space-y-3"></div>
             </div>
@@ -153,7 +153,7 @@
                 <h3 class="text-base font-bold text-blue-400 mb-3">👥 কর্মরত সকল ইউজার তালিকা</h3>
                 <div class="overflow-x-auto max-h-60 overflow-y-auto">
                     <table class="w-full text-left text-xs text-gray-300">
-                        <thead class="bg-slate-950 text-gray-400"><tr><th class="p-2.5">ইমেইল</th><th class="p-2.5">ব্যালেন্স</th><th class="p-2.5">আজকের এড</th><th class="p-2.5">রেফার</th></tr></thead>
+                        <thead class="bg-slate-950 text-gray-400"><tr><th class="p-2.5">ইমেইল</th><th class="p-2.5">UID</th><th class="p-2.5">ব্যালেন্স</th><th class="p-2.5">রেফার</th></tr></thead>
                         <tbody id="admin-users-table"></tbody>
                     </table>
                 </div>
@@ -175,12 +175,12 @@
         async function loginUser() {
             const email = document.getElementById('login-email').value.trim();
             if(!email) return alert('দয়া করে ইমেইল দিন!');
-            const refBy = localStorage.getItem('pepe_ref') || null;
+            const refUid = localStorage.getItem('pepe_ref') || null;
 
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email, refBy})
+                body: JSON.stringify({email, refUid})
             });
             const data = await res.json();
             if(data.success) {
@@ -209,7 +209,9 @@
                 document.getElementById('user-ref-count').innerText = data.user.refs;
                 document.getElementById('withdraw-ref-count').innerText = data.user.refs;
                 document.getElementById('withdraw-email').value = data.user.email;
-                document.getElementById('ref-link').value = window.location.origin + `/?ref=` + data.user.email;
+                
+                // এখানে ইমেইলের বদলে সিকিউর UID দিয়ে রেফারেল লিংক তৈরি হবে (যেমন: ?ref=u_482910)
+                document.getElementById('ref-link').value = window.location.origin + `/?ref=` + data.user.uid;
                 
                 document.getElementById('max-ads-limit').innerText = data.settings.dailyLimit;
                 document.getElementById('min-ref-req').innerText = data.settings.minRefs;
@@ -229,7 +231,6 @@
                 }
                 document.getElementById('history-table').innerHTML = historyHTML;
 
-                // Task List with Secure Timer & Hidden Claim Button
                 let tasksHTML = '';
                 data.tasks.forEach(t => {
                     const isCompleted = data.user.completedTasks && data.user.completedTasks.includes(t.id);
@@ -266,18 +267,16 @@
 
                     let usersHTML = '';
                     data.allUsers.forEach(u => {
-                        usersHTML += `<tr class="border-b border-slate-800/60"><td class="p-2.5">${u.email}</td><td class="p-2.5 text-green-400 font-bold">${u.balance}</td><td class="p-2.5 text-yellow-400">${u.adsToday}/${data.settings.dailyLimit}</td><td class="p-2.5 text-blue-400 font-bold">${u.refs}</td></tr>`;
+                        usersHTML += `<tr class="border-b border-slate-800/60"><td class="p-2.5">${u.email}</td><td class="p-2.5 text-purple-400 font-mono">${u.uid}</td><td class="p-2.5 text-green-400 font-bold">${u.balance}</td><td class="p-2.5 text-blue-400 font-bold">${u.refs}</td></tr>`;
                     });
                     document.getElementById('admin-users-table').innerHTML = usersHTML;
                 }
             }
         }
 
-        // Task Timer & Dynamic Claim Reveal System
         function startTaskTimer(taskId) {
             const actionDiv = document.getElementById(`task-action-${taskId}`);
-            let timeLeft = 15; // ১৫ সেকেন্ড কাউন্টডাউন
-            
+            let timeLeft = 15;
             actionDiv.innerHTML = `<p class="text-xs text-yellow-400 font-bold text-center py-2 w-full bg-slate-900 rounded">⏳ টাস্ক পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>`;
 
             const timer = setInterval(() => {
@@ -286,7 +285,6 @@
                     actionDiv.innerHTML = `<p class="text-xs text-yellow-400 font-bold text-center py-2 w-full bg-slate-900 rounded">⏳ টাস্ক পেজে ${timeLeft} সেকেন্ড অপেক্ষা করুন...</p>`;
                 } else {
                     clearInterval(timer);
-                    // সময় শেষ হলে তবেই ক্লাইম বাটন শো করবে
                     actionDiv.innerHTML = `<button onclick="claimTask(${taskId})" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-2 rounded-lg text-xs shadow animate-pulse">🎁 ক্লাইম করুন ও পয়েন্ট নিন</button>`;
                 }
             }, 1000);
@@ -357,7 +355,7 @@
             const copyText = document.getElementById("ref-link");
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("রিয়েল রেফারেল লিংক কপি হয়েছে!");
+            alert("সিকিউর রেফারেল লিংক কপি হয়েছে!");
         }
 
         async function requestWithdraw() {
