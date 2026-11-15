@@ -12,16 +12,16 @@ let db = {
     { email: "admin@pepe.com", uid: "admin_01", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] }
   ],
   adminSettings: {
-    minRefs: 3,
-    minWithdraw: 1000,
+    minRefs: 0,
+    minWithdraw: 10,
     dailyLimit: 30,
-    rewardPerAd: 50,
+    rewardPerAd: 10,
     adDuration: 15,
-    adNetworkUrl: "https://www.google.com",
-    faucetpayApiKey: ""
+    adNetworkUrl: "https://uplcm.com/4/9137470",
+    faucetpayApiKey: "660278ac2da745a2cc93882be85c519663b4f7f773db8388eccb7a056db1cc39"
   },
   tasks: [
-    { id: 1, title: "আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন", reward: 100, link: "https://t.me" }
+    { id: 1, title: "টেলিগ্রাম চ্যানেল (+10)", reward: 10, link: "https://t.me" }
   ],
   totalPaidOut: 0
 };
@@ -34,7 +34,6 @@ function checkDailyReset(user) {
   }
 }
 
-// Login / Register with Unique ID (UID) Referral
 app.post('/api/login', (req, res) => {
   const { email, refUid } = req.body;
   if (!email || !email.includes('@')) {
@@ -43,12 +42,9 @@ app.post('/api/login', (req, res) => {
   
   let user = db.users.find(u => u.email === email);
   if (!user) {
-    // ইউনিক ইউজার আইডি জেনারেট করা (যেমন: u_849320)
     const uniqueUid = 'u_' + Math.floor(100000 + Math.random() * 900000);
-    
     user = { email, uid: uniqueUid, balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [] };
     
-    // রেফারেল প্রসেসিং (UID দিয়ে)
     if (refUid) {
       let referrer = db.users.find(u => u.uid === refUid);
       if (referrer && referrer.email !== email) {
@@ -142,7 +138,7 @@ app.post('/api/claim-task', (req, res) => {
   if (!user || !task) return res.status(400).json({ success: false });
 
   if (user.completedTasks.includes(taskId)) {
-    return res.json({ success: false, message: 'এই টাস্কটি আপনি ইতিমধ্যে সম্পন্ন করেছেন!' });
+    return res.json({ success: false, message: 'এই টাস্কটি ইতিমধ্যে সম্পন্ন করেছেন!' });
   }
 
   user.completedTasks.push(taskId);
@@ -152,24 +148,46 @@ app.post('/api/claim-task', (req, res) => {
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-app.post('/api/withdraw', (req, res) => {
+// FaucetPay Real Send API Integration
+app.post('/api/withdraw', async (req, res) => {
   const { email, withdrawEmail } = req.body;
   let user = db.users.find(u => u.email === email);
-  if (!user) return res.status(400).json({ success: false });
+  if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   if (user.refs < db.adminSettings.minRefs) {
-    return res.json({ success: false, message: `উইথড্র করতে কমপক্ষে ${db.adminSettings.minRefs}টি রিয়েল রেফার করতে হবে!` });
+    return res.json({ success: false, message: `উইথড্র করতে কমপক্ষে ${db.adminSettings.minRefs}টি রেফার করতে হবে!` });
   }
   if (user.balance < db.adminSettings.minWithdraw) {
     return res.json({ success: false, message: `ন্যূনতম উইথড্র অ্যামাউন্ট ${db.adminSettings.minWithdraw} PEPE!` });
   }
 
   const amount = user.balance;
-  user.balance = 0;
-  db.totalPaidOut += amount;
-  user.history.unshift({ type: `FaucetPay Payout (${withdrawEmail})`, amount: `-${amount} PEPE`, date: new Date().toLocaleTimeString() });
 
-  res.json({ success: true, message: `সফলভাবে ${amount} PEPE আপনার FaucetPay ইমেইলে পেমেন্ট পাঠানো হয়েছে!` });
+  try {
+    const fpResponse = await fetch('https://faucetpay.io/api/v1/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        api_key: db.adminSettings.faucetpayApiKey,
+        to: withdrawEmail,
+        amount: amount,
+        currency: 'PEPE'
+      })
+    });
+
+    const fpResult = await fpResponse.json();
+
+    if (fpResult.status === 200) {
+      user.balance = 0;
+      db.totalPaidOut += amount;
+      user.history.unshift({ type: `FaucetPay Payout (${withdrawEmail})`, amount: `-${amount} PEPE`, date: new Date().toLocaleTimeString() });
+      return res.json({ success: true, message: `সফলভাবে ${amount} PEPE আপনার FaucetPay ওয়ালেটে পাঠানো হয়েছে!` });
+    } else {
+      return res.json({ success: false, message: `পেমেন্ট ফেইল হয়েছে: ${fpResult.message || 'পর্যাপ্ত ব্যালেন্স বা এপিআই সমস্যা'}` });
+    }
+  } catch (error) {
+    return res.json({ success: false, message: 'সার্ভার কানেকশন এরর! ফসেটপে এপিআই কাজ করছে না।' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
