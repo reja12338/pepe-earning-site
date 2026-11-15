@@ -58,7 +58,7 @@ function checkDailyReset(user) {
   }
 }
 
-// Login & Register (Smooth & Secure)
+// Login & Register (Strict Email & Device Lock)
 app.post('/api/login', (req, res) => {
   db = loadDb();
   const { email, refUid, deviceId } = req.body;
@@ -67,26 +67,27 @@ app.post('/api/login', (req, res) => {
     return res.status(400).json({ success: false, message: 'সঠিক FaucetPay ইমেইল দিন।' });
   }
 
+  const cleanEmail = email.trim().toLowerCase();
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown_ip';
   const clientDevice = deviceId || ('dev_' + Math.random());
 
-  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = db.users.find(u => u.email.toLowerCase() === cleanEmail);
 
   if (!user) {
-    // একই ডিভাইস থেকে একাধিক একাউন্ট খোলার সিকিউরিটি চেক (এডমিন ছাড়া)
-    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    // ১টি ডিভাইস থেকে একাধিক অ্যাকাউন্ট খোলার সিকিউরিটি চেক (এডমিন ছাড়া)
+    if (cleanEmail !== ADMIN_EMAIL.toLowerCase()) {
       const existingDeviceUser = db.users.find(u => u.deviceId === clientDevice && u.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase());
       if (existingDeviceUser) {
         return res.status(400).json({ 
           success: false, 
-          message: 'এই ডিভাইস থেকে ইতিমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে।' 
+          message: 'সুরক্ষা নীতি: এই ডিভাইস থেকে ইতিমধ্যে অন্য একটি অ্যাকাউন্ট খোলা হয়েছে।' 
         });
       }
     }
 
     const uniqueUid = 'u_' + Math.floor(100000 + Math.random() * 900000);
     user = { 
-      email, 
+      email: email.trim(), 
       uid: uniqueUid, 
       balance: 0, 
       refs: 0, 
@@ -101,7 +102,7 @@ app.post('/api/login', (req, res) => {
     
     if (refUid) {
       let referrer = db.users.find(u => u.uid === refUid);
-      if (referrer && referrer.email.toLowerCase() !== email.toLowerCase()) {
+      if (referrer && referrer.email.toLowerCase() !== cleanEmail) {
         user.referredBy = referrer.email;
         referrer.refs += 1;
         referrer.history.unshift({ type: `New Referral`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
@@ -113,19 +114,19 @@ app.post('/api/login', (req, res) => {
   
   checkDailyReset(user);
   saveDb(db);
-  const isAdmin = (email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+  const isAdmin = (cleanEmail === ADMIN_EMAIL.toLowerCase());
   res.json({ success: true, user, isAdmin });
 });
 
 app.get('/api/user/:email', (req, res) => {
   db = loadDb();
-  const email = req.params.email;
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const email = req.params.email.trim().toLowerCase();
+  const user = db.users.find(u => u.email.toLowerCase() === email);
   if (!user) return res.status(404).json({ success: false });
 
   checkDailyReset(user);
   saveDb(db);
-  const isAdmin = (email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+  const isAdmin = (email === ADMIN_EMAIL.toLowerCase());
 
   res.json({ 
     success: true, 
@@ -144,7 +145,7 @@ app.get('/api/user/:email', (req, res) => {
 app.post('/api/admin/settings', (req, res) => {
   db = loadDb();
   const { email, minRefs, minWithdraw, dailyLimit, rewardPerAd, adDuration, adNetworkUrl, faucetpayApiKey } = req.body;
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
+  if (!email || email.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.adminSettings.minRefs = Number(minRefs);
   db.adminSettings.minWithdraw = Number(minWithdraw);
@@ -161,7 +162,7 @@ app.post('/api/admin/settings', (req, res) => {
 app.post('/api/admin/tasks/add', (req, res) => {
   db = loadDb();
   const { email, title, reward, link } = req.body;
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
+  if (!email || email.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.tasks.push({ id: Date.now(), title, reward: Number(reward), link });
   saveDb(db);
@@ -171,7 +172,7 @@ app.post('/api/admin/tasks/add', (req, res) => {
 app.post('/api/admin/tasks/delete', (req, res) => {
   db = loadDb();
   const { email, taskId } = req.body;
-  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
+  if (!email || email.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.tasks = db.tasks.filter(t => t.id !== taskId);
   saveDb(db);
@@ -181,7 +182,7 @@ app.post('/api/admin/tasks/delete', (req, res) => {
 app.post('/api/watch-ad', (req, res) => {
   db = loadDb();
   const { email } = req.body;
-  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
   if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   checkDailyReset(user);
@@ -200,7 +201,7 @@ app.post('/api/watch-ad', (req, res) => {
 app.post('/api/claim-task', (req, res) => {
   db = loadDb();
   const { email, taskId } = req.body;
-  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
   let task = db.tasks.find(t => t.id === taskId);
   if (!user || !task) return res.status(400).json({ success: false, message: 'টাস্ক বা ইউজার পাওয়া যায়নি!' });
 
@@ -216,11 +217,11 @@ app.post('/api/claim-task', (req, res) => {
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-// FaucetPay Real Send API Integration (Exact Satoshi Math)
+// FaucetPay Real Send API Integration
 app.post('/api/withdraw', async (req, res) => {
   db = loadDb();
   const { email, withdrawEmail } = req.body;
-  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase());
   if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   if (user.refs < db.adminSettings.minRefs) {
