@@ -58,7 +58,7 @@ function checkDailyReset(user) {
   }
 }
 
-// Login & Register (Strict Email & Device Lock)
+// কঠোর ডিভাইস লক ও অ্যাকাউন্ট সিকিউরিটি
 app.post('/api/login', (req, res) => {
   db = loadDb();
   const { email, refUid, deviceId } = req.body;
@@ -69,18 +69,18 @@ app.post('/api/login', (req, res) => {
 
   const cleanEmail = email.trim().toLowerCase();
   const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown_ip';
-  const clientDevice = deviceId || ('dev_' + Math.random());
+  const clientDevice = deviceId || 'unknown_device';
 
   let user = db.users.find(u => u.email.toLowerCase() === cleanEmail);
 
   if (!user) {
-    // ১টি ডিভাইস থেকে একাধিক অ্যাকাউন্ট খোলার সিকিউরিটি চেক (এডমিন ছাড়া)
+    // যদি কেউ এডমিন না হয়, তবে চেক করবে এই ডিভাইস থেকে ইতিপূর্বে অন্য কোনো অ্যাকাউন্ট খোলা হয়েছে কি না
     if (cleanEmail !== ADMIN_EMAIL.toLowerCase()) {
       const existingDeviceUser = db.users.find(u => u.deviceId === clientDevice && u.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase());
       if (existingDeviceUser) {
         return res.status(400).json({ 
           success: false, 
-          message: 'সুরক্ষা নীতি: এই ডিভাইস থেকে ইতিমধ্যে অন্য একটি অ্যাকাউন্ট খোলা হয়েছে।' 
+          message: 'সিকিউরিটি অ্যালার্ট! এই ডিভাইস থেকে ইতিমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে। একাধিক অ্যাকাউন্ট খোলা কঠোরভাবে নিষিদ্ধ।' 
         });
       }
     }
@@ -217,7 +217,6 @@ app.post('/api/claim-task', (req, res) => {
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
-// FaucetPay Real Send API Integration
 app.post('/api/withdraw', async (req, res) => {
   db = loadDb();
   const { email, withdrawEmail } = req.body;
