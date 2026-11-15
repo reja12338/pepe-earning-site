@@ -6,13 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// রিয়েল ক্লায়েন্ট আইপি পাওয়ার জন্য
 app.set('trust proxy', true);
 
 const ADMIN_EMAIL = "admin@pepe.com";
 const DB_FILE = path.join(__dirname, 'database.json');
 
-// ডাটা ফাইল লোড বা ইনিশিয়ালাইজ করার ফাংশন
 function loadDb() {
   if (fs.existsSync(DB_FILE)) {
     try {
@@ -22,7 +20,6 @@ function loadDb() {
       console.error("Database read error:", e);
     }
   }
-  // ডিফল্ট ডাটা যদি ফাইল না থাকে
   return {
     users: [
       { email: "admin@pepe.com", uid: "admin_01", balance: 0, refs: 0, adsToday: 0, lastAdReset: Date.now(), referredBy: null, completedTasks: [], history: [], ip: "127.0.0.1", deviceId: "admin_device" }
@@ -43,7 +40,6 @@ function loadDb() {
   };
 }
 
-// ডাটা ফাইল সেভ করার ফাংশন
 function saveDb(data) {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
@@ -62,28 +58,30 @@ function checkDailyReset(user) {
   }
 }
 
-// Login with IP and Device Security Check
+// Login & Register with clean error handling (No undefined)
 app.post('/api/login', (req, res) => {
-  db = loadDb(); // লেটেস্ট ডাটা লোড
+  db = loadDb();
   const { email, refUid, deviceId } = req.body;
+  
   if (!email || !email.includes('@')) {
     return res.status(400).json({ success: false, message: 'সঠিক FaucetPay ইমেইল দিন।' });
   }
 
-  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const clientDevice = deviceId || 'unknown_device';
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown_ip';
+  const clientDevice = deviceId || ('dev_' + Math.random());
 
   let user = db.users.find(u => u.email === email);
 
   if (!user) {
+    // ফেক অ্যাকাউন্ট ও মাল্টি-অ্যাকাউন্ট প্রটেকশন (এডমিন ছাড়া)
     if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
       const existingDeviceUser = db.users.find(u => u.deviceId === clientDevice && u.email !== ADMIN_EMAIL);
-      const existingIpUser = db.users.find(u => u.ip === clientIp && u.email !== ADMIN_EMAIL);
-
-      if (existingDeviceUser || existingIpUser) {
+      
+      // একই ডিভাইস থেকে একাধিক অ্যাকাউন্ট খোলা কঠোরভাবে ব্লক করা হলো
+      if (existingDeviceUser) {
         return res.status(400).json({ 
           success: false, 
-          message: 'সুরক্ষা নীতি লঙ্ঘন! এই ডিভাইস বা Wi-Fi নেটওয়ার্ক থেকে ইতিমধ্যে অন্য অ্যাকাউন্ট খোলা হয়েছে।' 
+          message: 'এই ডিভাইস থেকে ইতিমধ্যে একটি অ্যাকাউন্ট খোলা হয়েছে। একাধিক অ্যাকাউন্ট খোলা নিষিদ্ধ।' 
         });
       }
     }
@@ -105,14 +103,14 @@ app.post('/api/login', (req, res) => {
     
     if (refUid) {
       let referrer = db.users.find(u => u.uid === refUid);
-      if (referrer && referrer.email !== email && referrer.ip !== clientIp) {
+      if (referrer && referrer.email !== email) {
         user.referredBy = referrer.email;
         referrer.refs += 1;
         referrer.history.unshift({ type: `New Referral`, amount: '+1 Ref', date: new Date().toLocaleTimeString() });
       }
     }
     db.users.push(user);
-    saveDb(db); // সেভ
+    saveDb(db);
   }
   
   checkDailyReset(user);
@@ -122,7 +120,7 @@ app.post('/api/login', (req, res) => {
 });
 
 app.get('/api/user/:email', (req, res) => {
-  db = loadDb(); // লেটেস্ট ডাটা লোড
+  db = loadDb();
   const email = req.params.email;
   const user = db.users.find(u => u.email === email);
   if (!user) return res.status(404).json({ success: false });
@@ -158,7 +156,7 @@ app.post('/api/admin/settings', (req, res) => {
   db.adminSettings.adNetworkUrl = adNetworkUrl;
   db.adminSettings.faucetpayApiKey = faucetpayApiKey;
 
-  saveDb(db); // সেভ
+  saveDb(db);
   res.json({ success: true, message: 'সেটিংস সফলভাবে আপডেট হয়েছে!' });
 });
 
@@ -168,7 +166,7 @@ app.post('/api/admin/tasks/add', (req, res) => {
   if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.tasks.push({ id: Date.now(), title, reward: Number(reward), link });
-  saveDb(db); // স্থায়ীভাবে ফাইলে সেভ হলো
+  saveDb(db);
   res.json({ success: true, message: 'টাস্ক সফলভাবে যোগ হয়েছে!' });
 });
 
@@ -178,7 +176,7 @@ app.post('/api/admin/tasks/delete', (req, res) => {
   if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return res.status(403).json({ success: false });
 
   db.tasks = db.tasks.filter(t => t.id !== taskId);
-  saveDb(db); // সেভ
+  saveDb(db);
   res.json({ success: true, message: 'টাস্ক ডিলিট করা হয়েছে!' });
 });
 
@@ -186,7 +184,7 @@ app.post('/api/watch-ad', (req, res) => {
   db = loadDb();
   const { email } = req.body;
   let user = db.users.find(u => u.email === email);
-  if (!user) return res.status(400).json({ success: false });
+  if (!user) return res.status(400).json({ success: false, message: 'ইউজার পাওয়া যায়নি!' });
 
   checkDailyReset(user);
   if (user.adsToday >= db.adminSettings.dailyLimit) {
@@ -197,7 +195,7 @@ app.post('/api/watch-ad', (req, res) => {
   user.adsToday += 1;
   user.history.unshift({ type: 'Ad Watch Reward', amount: `+${db.adminSettings.rewardPerAd} PEPE`, date: new Date().toLocaleTimeString() });
   
-  saveDb(db); // সেভ
+  saveDb(db);
   res.json({ success: true, newBalance: user.balance, adsToday: user.adsToday });
 });
 
@@ -206,7 +204,7 @@ app.post('/api/claim-task', (req, res) => {
   const { email, taskId } = req.body;
   let user = db.users.find(u => u.email === email);
   let task = db.tasks.find(t => t.id === taskId);
-  if (!user || !task) return res.status(400).json({ success: false });
+  if (!user || !task) return res.status(400).json({ success: false, message: 'টাস্ক বা ইউজার পাওয়া যায়নি!' });
 
   if (user.completedTasks.includes(taskId)) {
     return res.json({ success: false, message: 'এই টাস্কটি ইতিমধ্যে সম্পন্ন করেছেন!' });
@@ -216,7 +214,7 @@ app.post('/api/claim-task', (req, res) => {
   user.balance += task.reward;
   user.history.unshift({ type: `Task: ${task.title}`, amount: `+${task.reward} PEPE`, date: new Date().toLocaleTimeString() });
 
-  saveDb(db); // সেভ
+  saveDb(db);
   res.json({ success: true, message: `সফলভাবে ${task.reward} PEPE পয়েন্ট যোগ হয়েছে!` });
 });
 
@@ -252,10 +250,10 @@ app.post('/api/withdraw', async (req, res) => {
     const fpResult = await fpResponse.json();
 
     if (fpResult.status === 200) {
-      user.balance = 0;
+      user.balance =0;
       db.totalPaidOut += amount;
       user.history.unshift({ type: `FaucetPay Payout (${withdrawEmail})`, amount: `-${amount} PEPE`, date: new Date().toLocaleTimeString() });
-      saveDb(db); // পেমেন্টের পর ডাটা সেভ
+      saveDb(db);
       return res.json({ success: true, message: `সফলভাবে ${amount} PEPE আপনার FaucetPay ওয়ালেটে পাঠানো হয়েছে!` });
     } else {
       return res.json({ success: false, message: `পেমেন্ট ফেইল হয়েছে: ${fpResult.message || 'পর্যাপ্ত ব্যালেন্স বা ফসেটে ফান্ড নেই'}` });
