@@ -25,7 +25,7 @@
         <div id="login-section" class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl max-w-md mx-auto text-center mt-8">
             <div class="text-4xl mb-2">🐸</div>
             <h2 class="text-2xl font-bold mb-2 text-green-400">FaucetPay দিয়ে লগইন</h2>
-            <p class="text-gray-400 text-xs mb-5">রিয়েল মেম্বারদের জন্য সুরক্ষিত আর্নিং পোর্টাল।</p>
+            <p class="text-gray-400 text-xs mb-5">রিয়েল মেম্বারদের জন্য সুরক্ষিত আর্নিং পোর্টাল। প্রতি ডিভাইসে মাত্র ১টি অ্যাকাউন্ট।</p>
             <input type="email" id="login-email" placeholder="আপনার FaucetPay ইমেইল দিন..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 mb-4 text-sm text-white focus:outline-none focus:border-green-400">
             <button onclick="loginUser()" class="w-full bg-green-500 hover:bg-green-600 text-slate-950 font-extrabold p-3 rounded-xl transition shadow-lg">প্রবেশ করুন</button>
         </div>
@@ -65,7 +65,7 @@
                 </div>
             </div>
 
-            <!-- Referral Link (UID Based, No Email) -->
+            <!-- Referral Link -->
             <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
                 <h3 class="text-base font-bold mb-1 text-blue-400">👥 সিকিউর রেফারেল লিংক</h3>
                 <p class="text-xs text-gray-400 mb-3">লিংকে কোনো ইমেল থাকবে না, সংখ্যা বা ইউনিক কোড থাকবে। উইথড্র করতে <span id="min-ref-req" class="text-white font-bold">3</span>টি রেফার লাগবে।</p>
@@ -162,6 +162,16 @@
     </div>
 
     <script>
+        // ব্রাউজারের জন্য স্থায়ী ইউনিক ডিভাইস আইডি তৈরি বা লোড করার ফাংশন
+        function getDeviceUniqueId() {
+            let devId = localStorage.getItem('pepe_device_id');
+            if (!devId) {
+                devId = 'device_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('pepe_device_id', devId);
+            }
+            return devId;
+        }
+
         let currentUserEmail = localStorage.getItem('pepe_user') || '';
         let isAdminUser = false;
         let siteSettings = { adDuration: 15, adNetworkUrl: 'https://www.google.com' };
@@ -174,13 +184,14 @@
 
         async function loginUser() {
             const email = document.getElementById('login-email').value.trim();
-            if(!email) return alert('দয়া করে ইমেইল দিন!');
+            if(!email) return alert('দয়া করে FaucetPay ইমেইল দিন!');
             const refUid = localStorage.getItem('pepe_ref') || null;
+            const deviceId = getDeviceUniqueId(); // ডিভাইসের ইউনিক আইডি যুক্ত করা হলো
 
             const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email, refUid})
+                body: JSON.stringify({email, refUid, deviceId})
             });
             const data = await res.json();
             if(data.success) {
@@ -210,7 +221,6 @@
                 document.getElementById('withdraw-ref-count').innerText = data.user.refs;
                 document.getElementById('withdraw-email').value = data.user.email;
                 
-                // এখানে ইমেইলের বদলে সিকিউর UID দিয়ে রেফারেল লিংক তৈরি হবে (যেমন: ?ref=u_482910)
                 document.getElementById('ref-link').value = window.location.origin + `/?ref=` + data.user.uid;
                 
                 document.getElementById('max-ads-limit').innerText = data.settings.dailyLimit;
